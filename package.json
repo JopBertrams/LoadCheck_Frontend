@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@azure/msal-browser": "^2.37.0",
     "@fortawesome/fontawesome-svg-core": "^6.4.0",
     "@fortawesome/free-solid-svg-icons": "^6.4.0",
     "@fortawesome/vue-fontawesome": "^3.0.3",
@@ -16,7 +17,8 @@
     "chart.js": "^4.3.0",
     "floating-vue": "^2.0.0-beta.20",
     "vue": "^3.2.47",
-    "vue-router": "^4.2.1"
+    "vue-router": "^4.2.1",
+    "vuex": "^4.0.2"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.1.0",

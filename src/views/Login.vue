@@ -2,7 +2,7 @@
   <div class="content">
     <h1>LoadCheck</h1>
     <div id="login">
-      <button>Login with Microsoft Account</button>
+      <button @click="SignIn()">Login with Microsoft Account</button>
       <VTooltip
         :placement="'bottom'"
         :triggers="isMobile ? ['click'] : ['hover']"
@@ -32,6 +32,20 @@ export default {
       // TODO: Add check to see if user is on mobile
       isMobile: false,
     };
+  },
+  methods: {
+    async SignIn() {
+      await this.$store.state.msalInstance
+        .loginPopup({})
+        .then(() => {
+          const myAccounts = this.$store.state.msalInstance.getAllAccounts();
+          this.$store.state.account = myAccounts[0];
+          this.$router.push({ name: 'dashboard' });
+        })
+        .catch((error) => {
+          console.error(`error during authentication: ${error}`);
+        });
+    },
   },
 };
 </script>

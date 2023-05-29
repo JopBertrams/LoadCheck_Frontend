@@ -1,8 +1,8 @@
 <template>
   <header>
     <img id="header_image" src="../assets/images/header.png" alt="Header" />
-    <div id="user" v-if="isAuthenticated">
-      <p id="name">Welcome Mr. Venter</p>
+    <div id="user" v-if="this.$store.getters.isAuthenticated">
+      <p id="name">Welcome {{ this.$store.getters.getAccount.name }}</p>
       <img
         id="profile_picture"
         src="https://st3.depositphotos.com/6672868/13701/v/450/depositphotos_137014128-stock-illustration-user-profile-icon.jpg"
@@ -15,12 +15,6 @@
 <script>
 export default {
   name: 'Header',
-  data() {
-    return {
-      // TODO: Add check to see if user is authenticated
-      isAuthenticated: false,
-    };
-  },
 };
 </script>
 

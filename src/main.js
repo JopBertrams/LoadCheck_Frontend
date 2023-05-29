@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import './style.css';
 import App from './App.vue';
+import store from './store';
 
 import { createRouter } from './router';
 
@@ -46,4 +47,5 @@ createApp(App)
   .component('font-awesome-layers', FontAwesomeLayers)
   .use(createRouter(App))
   .use(FloatingVue)
+  .use(store)
   .mount('#app');

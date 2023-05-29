@@ -32,8 +32,7 @@
         >Settings</router-link
       >
     </nav>
-    <!-- TODO: Add logout funtionality -->
-    <button id="logout">Logout</button>
+    <button id="logout" @click="SignOut()">Logout</button>
   </aside>
 </template>
 
@@ -51,6 +50,19 @@ export default {
       menuToggle.classList.toggle('is-active');
       sidebar.classList.toggle('is-active');
     });
+  },
+  methods: {
+    async SignOut() {
+      this.$store
+        .dispatch('msalInstanceLogout')
+        .then(() => {
+          this.$store.dispatch('setAccount', undefined);
+          this.$router.push({ name: 'login' });
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    },
   },
 };
 </script>

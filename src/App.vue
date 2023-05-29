@@ -10,6 +10,7 @@
 import Header from './components/Header.vue';
 import Footer from './components/Footer.vue';
 import { useDark } from '@vueuse/core';
+import { PublicClientApplication } from '@azure/msal-browser';
 
 useDark({
   storageKey: 'loadcheck-color-scheme',
@@ -20,6 +21,31 @@ export default {
   components: {
     Header,
     Footer,
+  },
+  async created() {
+    this.$store.dispatch(
+      'setMsalInstance',
+      new PublicClientApplication(this.$store.getters.getMsalConfig)
+    );
+
+    // NOT NECESSARY?
+
+    // this.$store.state.msalInstance
+    //   .handleRedirectPromise()
+    //   .then((tokenResponse) => {
+    //     if (tokenResponse !== null) {
+    //       this.$store.state.msalInstance.setActiveAccount(
+    //         tokenResponse.account
+    //       );
+    //     }
+    //   });
+  },
+  mounted() {
+    const accounts = this.$store.getters.getAllMsalAccounts;
+    if (accounts.length > 0) {
+      this.$store.dispatch('setMsalInstanceActiveAccount', accounts[0]);
+      this.$store.dispatch('setAccount', accounts[0]);
+    }
   },
 };
 </script>
