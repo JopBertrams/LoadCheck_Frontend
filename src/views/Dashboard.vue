@@ -1,0 +1,520 @@
+<template>
+  <div class="content">
+    <Sidebar isSidebarActive="dashboard" />
+    <div class="main">
+      <div id="classes" class="rounded">
+        <div id="datepicker">
+          <div id="arrow_left">
+            <font-awesome-icon icon="fa-solid fa-arrow-left" />
+          </div>
+          <div id="dates">
+            <div id="monday" class="date">
+              <p>Mon</p>
+              <p>22</p>
+            </div>
+            <div id="tuesday" class="date">
+              <p>Tue</p>
+              <p>23</p>
+            </div>
+            <div id="wednesday" class="date is-active">
+              <p>Wed</p>
+              <p>24</p>
+            </div>
+            <div id="thursday" class="date">
+              <p>Thu</p>
+              <p>25</p>
+            </div>
+            <div id="friday" class="date">
+              <p>Fri</p>
+              <p>26</p>
+            </div>
+          </div>
+          <div id="arrow_right">
+            <font-awesome-icon icon="fa-solid fa-arrow-right" />
+          </div>
+        </div>
+        <div id="AM" class="class">
+          <div class="subject">
+            <span>AIN371</span>
+          </div>
+          <div class="location_time">
+            <p>Kappa 2</p>
+            <p>AM</p>
+          </div>
+          <div class="students">
+            <p>32 students - 12 online</p>
+          </div>
+          <!-- TODO: Add hover tooltip -->
+          <font-awesome-icon
+            icon="fa-solid fa-circle-exclamation"
+            class="warning"
+          />
+        </div>
+        <div id="PM" class="class">
+          <div class="subject">
+            <span>UAX381</span>
+          </div>
+          <div class="location_time">
+            <p>Lambda</p>
+            <p>PM</p>
+          </div>
+          <div class="students">
+            <p>5 students - 22 online</p>
+          </div>
+          <!-- TODO: Add hover tooltip -->
+          <font-awesome-icon icon="fa-solid fa-circle-check" class="info" />
+        </div>
+      </div>
+      <div id="tests" class="rounded">
+        <p id="title">Tests this Friday</p>
+        <div id="classes">
+          <div id="AM" class="class">
+            <div class="subject">
+              <span>AIN371</span>
+            </div>
+            <div class="location_time">
+              <p>Kappa 2</p>
+              <p>AM</p>
+            </div>
+            <div class="students">
+              <p>4 students with loadshedding</p>
+            </div>
+            <!-- TODO: Add hover tooltip -->
+            <font-awesome-icon
+              icon="fa-solid fa-circle-exclamation"
+              class="warning"
+            />
+          </div>
+          <div id="PM" class="class">
+            <div class="subject">
+              <span>UAX381</span>
+            </div>
+            <div class="location_time">
+              <p>Lambda</p>
+              <p>PM</p>
+            </div>
+            <div class="students">
+              <p>1 student with loadshedding</p>
+            </div>
+            <!-- TODO: Add hover tooltip -->
+            <font-awesome-icon icon="fa-solid fa-circle-check" class="info" />
+          </div>
+        </div>
+      </div>
+      <div id="loadshedding_campus" class="rounded">
+        <p id="title">Loadshedding Tshwane Campus</p>
+        <div id="loadshedding_schedule">
+          <div id="today">
+            <p>Today</p>
+            <p>08:00 - 10:00</p>
+            <p>12:00 - 14:00</p>
+            <p>16:00 - 20:00</p>
+          </div>
+          <div id="tomorrow">
+            <p>Tomorrow</p>
+            <p>08:00 - 10:00</p>
+            <p>12:00 - 14:00</p>
+            <p>16:00 - 20:00</p>
+          </div>
+        </div>
+      </div>
+      <div id="students_with_loadshedding" class="rounded">
+        <p id="title">Students with loadshedding during class</p>
+        <p id="number_of_students">12</p>
+        <p id="more_than_yesterday">10 more than yesterday</p>
+      </div>
+      <div id="percentage_with_loadshedding" class="rounded">
+        <p id="title">Percentage of students with loadshedding this week</p>
+        <canvas id="myChart"></canvas>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import Sidebar from '../components/Sidebar.vue';
+import Chart from 'chart.js/auto';
+import { useDark } from '@vueuse/core';
+
+const isDark = useDark({
+  storageKey: 'loadcheck-color-scheme',
+});
+
+const labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+const data = {
+  labels: labels,
+  datasets: [
+    {
+      label: 'AM',
+      backgroundColor: 'rgb(173, 1, 81)',
+      borderColor: 'rgb(173, 1, 81)',
+      data: [0, 10, 5, 2, 19],
+    },
+    {
+      label: 'PM',
+      backgroundColor: 'rgb(42, 210, 201)',
+      borderColor: 'rgb(42, 210, 201)',
+      data: [0, 18, 15, 10, 5],
+    },
+  ],
+};
+
+export default {
+  name: 'Dashboard',
+  components: {
+    Sidebar,
+  },
+  data() {
+    return {
+      loadsheddingChart: null,
+      config: {
+        type: 'line',
+        data,
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: isDark.value ? 'white' : 'black',
+                callback: (value, index, values) => {
+                  return `${value}%`;
+                },
+              },
+              grid: {
+                color: isDark.value ? '#C7C7C7' : '#C7C7C7',
+              },
+            },
+            x: {
+              ticks: {
+                color: isDark.value ? 'white' : 'black',
+              },
+              grid: {
+                color: isDark.value ? '#C7C7C7' : '#C7C7C7',
+              },
+            },
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  let label = context.dataset.label || '';
+
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (context.parsed.y !== null) {
+                    label += `${context.parsed.y}%`;
+                  }
+                  return label;
+                },
+              },
+            },
+            legend: {
+              labels: {
+                color: isDark.value ? 'white' : 'black',
+              },
+            },
+          },
+        },
+      },
+    };
+  },
+  mounted() {
+    Chart.defaults.font.family = 'AvantGarde';
+    Chart.defaults.font.size = 16;
+    this.loadsheddingChart = new Chart(
+      document.getElementById('myChart'),
+      this.config
+    );
+  },
+};
+</script>
+
+<style scoped>
+.content {
+  display: flex;
+  flex-direction: row;
+}
+
+.main {
+  padding: 2rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr) 0.2fr 1fr 0.2fr 1fr;
+  grid-template-rows: repeat(2, 1fr) repeat(3, 0.5fr) repeat(2, 1fr);
+  grid-column-gap: 0px;
+  grid-row-gap: 0px;
+  width: 100%;
+}
+
+#classes {
+  display: flex;
+  flex-direction: column;
+  grid-area: 1 / 1 / 4 / 3;
+  background-color: var(--card-color);
+}
+
+#classes #datepicker {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+#classes #datepicker #arrow_left,
+#classes #datepicker #arrow_right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+  background-color: var(--BC-Blue);
+  color: var(--text-color);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 24px;
+}
+
+#classes #datepicker #dates {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+#classes #datepicker #dates .date {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+#classes #datepicker #dates .date p:nth-child(2) {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+#classes #datepicker #dates .date.is-active {
+  background-color: var(--BC-Blue);
+  border-radius: 50px;
+  width: 50px;
+  height: 75px;
+}
+
+#classes .class {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 50px;
+  margin: 10px;
+  padding: 10px;
+}
+
+#classes .subject {
+  min-width: 70px;
+}
+
+#classes .subject span {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+#classes .subject span::after {
+  content: '';
+  display: inline-block;
+  margin-left: 10px;
+  width: 5px;
+  height: 40px;
+  border-radius: 50px;
+  background-color: var(--BC-Blue);
+}
+
+#classes .location_time {
+  display: flex;
+  flex-direction: column;
+}
+
+#classes .students {
+  display: flex;
+  flex-direction: column;
+}
+
+#classes .warning,
+#classes .info {
+  margin-left: 30px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  color: orangered;
+}
+
+#classes .info {
+  color: green;
+}
+
+#tests {
+  grid-area: 5 / 1 / 8 / 3;
+  background-color: var(--card-color);
+}
+
+#tests #title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 10px 0 0 20px;
+}
+
+#tests #classes {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+#tests .class {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 50px;
+  margin: 10px;
+  padding: 10px;
+}
+
+#tests .subject {
+  min-width: 70px;
+}
+
+#tests .subject span {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+#tests .subject span::after {
+  content: '';
+  display: inline-block;
+  margin-left: 10px;
+  width: 5px;
+  height: 40px;
+  border-radius: 50px;
+  background-color: var(--BC-Blue);
+}
+
+#tests .location_time {
+  display: flex;
+  flex-direction: column;
+}
+
+#tests .students {
+  display: flex;
+  flex-direction: column;
+}
+
+#tests .warning,
+#tests .info {
+  margin-left: 30px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  color: orangered;
+}
+
+#tests .info {
+  color: green;
+}
+
+#loadshedding_campus {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  grid-area: 1 / 4 / 3 / 5;
+  background-color: var(--BC-Pink);
+}
+
+#loadshedding_campus #title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 10px;
+  color: #fff;
+}
+
+#loadshedding_campus #loadshedding_schedule {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+#loadshedding_campus #loadshedding_schedule div {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+#loadshedding_campus #loadshedding_schedule div p {
+  color: #fff;
+}
+
+#loadshedding_campus #loadshedding_schedule div p:nth-child(1) {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+#students_with_loadshedding {
+  grid-area: 1 / 6 / 3 / 7;
+  background-color: var(--BC-Pink);
+}
+
+#students_with_loadshedding #title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 10px;
+  color: #fff;
+  text-align: center;
+}
+
+#students_with_loadshedding #number_of_students {
+  font-size: 50px;
+  font-weight: bold;
+  color: #fff;
+  margin: 20px 0 0 20px;
+}
+
+#students_with_loadshedding #more_than_yesterday {
+  font-size: 16px;
+  color: #fff;
+  margin-left: 20px;
+}
+
+#percentage_with_loadshedding {
+  grid-area: 4 / 4 / 8 / 7;
+  background-color: var(--card-color);
+}
+
+#percentage_with_loadshedding #title {
+  font-size: 16px;
+  font-weight: bold;
+  margin: 10px 0 0 20px;
+}
+
+#percentage_with_loadshedding #myChart {
+  padding: 20px;
+}
+
+.rounded {
+  border-radius: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+</style>
