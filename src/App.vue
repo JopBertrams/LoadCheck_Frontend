@@ -23,10 +23,19 @@ export default {
     Footer,
   },
   async created() {
-    this.$store.dispatch(
+    await this.$store.dispatch(
       'setMsalInstance',
       new PublicClientApplication(this.$store.getters.getMsalConfig)
     );
+
+    if (
+      this.$store.getters.isAuthenticated &&
+      this.$store.getters.getGraphClient == undefined
+    ) {
+      this.$store.dispatch('setAuthProviderOptions');
+      this.$store.dispatch('setAuthProvider');
+      this.$store.dispatch('setGraphClient');
+    }
 
     // NOT NECESSARY?
 

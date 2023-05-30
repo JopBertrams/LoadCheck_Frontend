@@ -36,10 +36,15 @@ export default {
   methods: {
     async SignIn() {
       await this.$store.state.msalInstance
-        .loginPopup({})
+        .loginPopup({
+          scopes: this.$store.getters.getScopes,
+        })
         .then(() => {
           const myAccounts = this.$store.state.msalInstance.getAllAccounts();
           this.$store.state.account = myAccounts[0];
+          this.$store.dispatch('setAuthProviderOptions');
+          this.$store.dispatch('setAuthProvider');
+          this.$store.dispatch('setGraphClient');
           this.$router.push({ name: 'dashboard' });
         })
         .catch((error) => {

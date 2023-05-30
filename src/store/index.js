@@ -1,3 +1,6 @@
+import { InteractionType } from '@azure/msal-browser';
+import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
+import { Client } from '@microsoft/microsoft-graph-client';
 import { createStore } from 'vuex';
 
 const store = createStore({
@@ -13,8 +16,17 @@ const store = createStore({
         },
       },
       msalInstance: undefined,
+      scopes: [
+        'user.read',
+        'profile',
+        'openid',
+        'Calendars.Read.Shared',
+        'Calendars.Read',
+      ],
       account: undefined,
-      accessToken: '',
+      authProviderOptions: undefined,
+      authProvider: undefined,
+      graphClient: undefined,
     };
   },
   mutations: {
@@ -27,11 +39,26 @@ const store = createStore({
     setAccount(state, account) {
       state.account = account;
     },
-    setAccessToken(state, token) {
-      state.accessToken = token;
-    },
     msalInstanceLogout(state) {
       state.msalInstance.logoutPopup();
+    },
+    setAuthProviderOptions(state) {
+      state.authProviderOptions = {
+        account: state.account,
+        interactionType: InteractionType.Silent,
+        scopes: state.scopes,
+      };
+    },
+    setAuthProvider(state) {
+      state.authProvider = new AuthCodeMSALBrowserAuthenticationProvider(
+        state.msalInstance,
+        state.authProviderOptions
+      );
+    },
+    setGraphClient(state) {
+      state.graphClient = Client.initWithMiddleware({
+        authProvider: state.authProvider,
+      });
     },
   },
   actions: {
@@ -44,16 +71,28 @@ const store = createStore({
     setAccount(context, account) {
       context.commit('setAccount', account);
     },
-    setAccessToken(context, token) {
-      context.commit('setAccessToken', token);
-    },
     msalInstanceLogout(context) {
       context.commit('msalInstanceLogout');
+    },
+    setAuthProviderOptions(context) {
+      context.commit('setAuthProviderOptions');
+    },
+    setAuthProvider(context) {
+      context.commit('setAuthProvider');
+    },
+    setGraphClient(context) {
+      context.commit('setGraphClient');
     },
   },
   getters: {
     getMsalConfig(state) {
       return state.msalConfig;
+    },
+    getMsalInstance(state) {
+      return state.msalInstance;
+    },
+    getScopes(state) {
+      return state.scopes;
     },
     isAuthenticated(state) {
       return state.account !== undefined;
@@ -63,6 +102,9 @@ const store = createStore({
     },
     getAccount(state) {
       return state.account;
+    },
+    getGraphClient(state) {
+      return state.graphClient;
     },
   },
 });

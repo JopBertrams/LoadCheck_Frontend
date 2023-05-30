@@ -168,7 +168,7 @@ export default {
   data() {
     return {
       loadsheddingChart: null,
-      config: {
+      chartConfig: {
         type: 'line',
         data,
         options: {
@@ -218,15 +218,27 @@ export default {
           },
         },
       },
+      user: null,
+      calendar: null,
     };
   },
-  mounted() {
+  async mounted() {
     Chart.defaults.font.family = 'AvantGarde';
     Chart.defaults.font.size = 16;
     this.loadsheddingChart = new Chart(
       document.getElementById('myChart'),
-      this.config
+      this.chartConfig
     );
+
+    this.user = await this.$store.getters.getGraphClient
+      .api('/me/?$select=id,displayName,givenName,surname,department')
+      .get();
+
+    this.calendar = await this.$store.getters.getGraphClient
+      .api(
+        '/me/events?%24select=subject%2corganizer%2cstart%2cend%2clocation&%24top=30&%24skip=30'
+      )
+      .get();
   },
 };
 </script>
