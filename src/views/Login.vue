@@ -39,13 +39,28 @@ export default {
         .loginPopup({
           scopes: this.$store.getters.getScopes,
         })
-        .then(() => {
+        .then(async () => {
           const myAccounts = this.$store.state.msalInstance.getAllAccounts();
           this.$store.state.account = myAccounts[0];
           this.$store.dispatch('setAuthProviderOptions');
           this.$store.dispatch('setAuthProvider');
           this.$store.dispatch('setGraphClient');
-          this.$router.push({ name: 'dashboard' });
+
+          let user = await this.$store.getters.getGraphClient
+            .api('/me/?$select=id,department')
+            .get();
+          user.department = 'Student';
+          this.$store.dispatch('setUser', user);
+
+          this.$store.dispatch('setRole', user.department);
+
+          if (user.department == 'Student') {
+            this.$router.push({ name: 'student', params: { id: user.id } });
+          } else if (user.department == 'Lecturer') {
+            this.$router.push({ name: 'dashboard' });
+          } else {
+            this.$router.push({ name: '403' });
+          }
         })
         .catch((error) => {
           console.error(`error during authentication: ${error}`);

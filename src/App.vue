@@ -1,8 +1,8 @@
 <template>
   <div class="container">
-    <Header />
+    <Header v-if="this.$route.name !== '403'" />
     <router-view />
-    <Footer />
+    <Footer v-if="this.$route.name !== '403'" />
   </div>
 </template>
 
@@ -35,6 +35,18 @@ export default {
       this.$store.dispatch('setAuthProviderOptions');
       this.$store.dispatch('setAuthProvider');
       this.$store.dispatch('setGraphClient');
+    }
+
+    if (
+      this.$store.getters.isAuthenticated &&
+      this.$store.getters.getUser == undefined
+    ) {
+      let user = await this.$store.getters.getGraphClient
+        .api('/me/?$select=id,department')
+        .get();
+      user.department = 'Student';
+      this.$store.dispatch('setUser', user);
+      this.$store.dispatch('setRole', user.department);
     }
 
     // NOT NECESSARY?

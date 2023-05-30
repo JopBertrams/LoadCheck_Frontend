@@ -24,9 +24,11 @@ const store = createStore({
         'Calendars.Read',
       ],
       account: undefined,
+      user: undefined,
       authProviderOptions: undefined,
       authProvider: undefined,
       graphClient: undefined,
+      role: undefined,
     };
   },
   mutations: {
@@ -38,6 +40,9 @@ const store = createStore({
     },
     setAccount(state, account) {
       state.account = account;
+    },
+    setUser(state, user) {
+      state.user = user;
     },
     msalInstanceLogout(state) {
       state.msalInstance.logoutPopup();
@@ -60,6 +65,9 @@ const store = createStore({
         authProvider: state.authProvider,
       });
     },
+    setRole(state, role) {
+      state.role = role;
+    },
   },
   actions: {
     setMsalInstance(context, msalInstance) {
@@ -70,6 +78,9 @@ const store = createStore({
     },
     setAccount(context, account) {
       context.commit('setAccount', account);
+    },
+    setUser(context, user) {
+      context.commit('setUser', user);
     },
     msalInstanceLogout(context) {
       context.commit('msalInstanceLogout');
@@ -82,6 +93,9 @@ const store = createStore({
     },
     setGraphClient(context) {
       context.commit('setGraphClient');
+    },
+    setRole(context, role) {
+      context.commit('setRole', role);
     },
   },
   getters: {
@@ -103,8 +117,14 @@ const store = createStore({
     getAccount(state) {
       return state.account;
     },
+    getUser(state) {
+      return state.user;
+    },
     getGraphClient(state) {
       return state.graphClient;
+    },
+    getRole(state) {
+      return state.role;
     },
   },
 });
