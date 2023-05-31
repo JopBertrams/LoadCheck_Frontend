@@ -49,10 +49,8 @@ export default {
           let user = await this.$store.getters.getGraphClient
             .api('/me/?$select=id,department')
             .get();
-          user.department = 'Student';
+          user.department = 'Lecturer';
           this.$store.dispatch('setUser', user);
-
-          this.$store.dispatch('setRole', user.department);
 
           if (user.department == 'Student') {
             this.$router.push({ name: 'student', params: { id: user.id } });

@@ -17,9 +17,11 @@
     "@vueuse/core": "^10.1.2",
     "chart.js": "^4.3.0",
     "floating-vue": "^2.0.0-beta.20",
+    "secure-ls": "^1.2.6",
     "vue": "^3.2.47",
     "vue-router": "^4.2.1",
-    "vuex": "^4.0.2"
+    "vuex": "^4.0.2",
+    "vuex-persistedstate": "^4.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.1.0",

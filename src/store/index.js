@@ -2,6 +2,14 @@ import { InteractionType } from '@azure/msal-browser';
 import { AuthCodeMSALBrowserAuthenticationProvider } from '@microsoft/microsoft-graph-client/authProviders/authCodeMsalBrowser';
 import { Client } from '@microsoft/microsoft-graph-client';
 import { createStore } from 'vuex';
+import createPersistedState from 'vuex-persistedstate';
+import SecureLS from 'secure-ls';
+
+const ls = new SecureLS({
+  encodingType: 'aes',
+  isCompression: true,
+  encryptionSecret: import.meta.env.VITE_LS_SECRET,
+});
 
 const store = createStore({
   state() {
@@ -28,7 +36,6 @@ const store = createStore({
       authProviderOptions: undefined,
       authProvider: undefined,
       graphClient: undefined,
-      role: undefined,
     };
   },
   mutations: {
@@ -65,9 +72,6 @@ const store = createStore({
         authProvider: state.authProvider,
       });
     },
-    setRole(state, role) {
-      state.role = role;
-    },
   },
   actions: {
     setMsalInstance(context, msalInstance) {
@@ -93,9 +97,6 @@ const store = createStore({
     },
     setGraphClient(context) {
       context.commit('setGraphClient');
-    },
-    setRole(context, role) {
-      context.commit('setRole', role);
     },
   },
   getters: {
@@ -124,9 +125,19 @@ const store = createStore({
       return state.graphClient;
     },
     getRole(state) {
-      return state.role;
+      return state.user.department;
     },
   },
+  plugins: [
+    createPersistedState({
+      storage: {
+        getItem: (key) => ls.get(key),
+        setItem: (key, value) => ls.set(key, value),
+        removeItem: (key) => ls.remove(key),
+      },
+      paths: ['account', 'user'],
+    }),
+  ],
 });
 
 export default store;

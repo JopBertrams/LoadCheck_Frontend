@@ -37,20 +37,7 @@ export default {
       this.$store.dispatch('setGraphClient');
     }
 
-    if (
-      this.$store.getters.isAuthenticated &&
-      this.$store.getters.getUser == undefined
-    ) {
-      let user = await this.$store.getters.getGraphClient
-        .api('/me/?$select=id,department')
-        .get();
-      user.department = 'Student';
-      this.$store.dispatch('setUser', user);
-      this.$store.dispatch('setRole', user.department);
-    }
-
     // NOT NECESSARY?
-
     // this.$store.state.msalInstance
     //   .handleRedirectPromise()
     //   .then((tokenResponse) => {
@@ -61,13 +48,7 @@ export default {
     //     }
     //   });
   },
-  mounted() {
-    const accounts = this.$store.getters.getAllMsalAccounts;
-    if (accounts.length > 0) {
-      this.$store.dispatch('setMsalInstanceActiveAccount', accounts[0]);
-      this.$store.dispatch('setAccount', accounts[0]);
-    }
-  },
+  mounted() {},
 };
 </script>
 
