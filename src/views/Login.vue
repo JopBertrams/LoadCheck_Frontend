@@ -49,7 +49,21 @@ export default {
           let user = await this.$store.getters.getGraphClient
             .api('/me/?$select=id,department')
             .get();
-          user.department = 'Lecturer';
+
+          // Choosing user department for development purposes
+          if (process.env.NODE_ENV == 'development') {
+            let department = prompt(
+              'Please enter department (Student/Lecturer/Other):'
+            );
+            if (department == null || department == '') {
+              console.info(
+                "No department entered. User's own department will be used."
+              );
+            } else {
+              user.department = department;
+            }
+          }
+
           this.$store.dispatch('setUser', user);
 
           if (user.department == 'Student') {

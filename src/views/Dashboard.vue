@@ -4,42 +4,70 @@
     <div class="main">
       <div id="classes" class="rounded">
         <div id="datepicker">
-          <div id="arrow_left">
+          <div @click="goToLastWeek()" id="arrow_left">
             <font-awesome-icon icon="fa-solid fa-arrow-left" />
           </div>
           <div id="dates">
-            <div id="monday" class="date">
-              <p>Mon</p>
-              <p>22</p>
+            <div
+              id="monday"
+              class="date"
+              v-bind:class="selectedDay.day == 1 ? 'is-active' : ''"
+              @click="selectDay(1)"
+            >
+              <p>{{ daysThisWeek[0].day }}</p>
+              <p>{{ daysThisWeek[0].date }}</p>
             </div>
-            <div id="tuesday" class="date">
-              <p>Tue</p>
-              <p>23</p>
+            <div
+              id="tuesday"
+              class="date"
+              v-bind:class="selectedDay.day == 2 ? 'is-active' : ''"
+              @click="selectDay(2)"
+            >
+              <p>{{ daysThisWeek[1].day }}</p>
+              <p>{{ daysThisWeek[1].date }}</p>
             </div>
-            <div id="wednesday" class="date is-active">
-              <p>Wed</p>
-              <p>24</p>
+            <div
+              id="wednesday"
+              class="date"
+              v-bind:class="selectedDay.day == 3 ? 'is-active' : ''"
+              @click="selectDay(3)"
+            >
+              <p>{{ daysThisWeek[2].day }}</p>
+              <p>{{ daysThisWeek[2].date }}</p>
             </div>
-            <div id="thursday" class="date">
-              <p>Thu</p>
-              <p>25</p>
+            <div
+              id="thursday"
+              class="date"
+              v-bind:class="selectedDay.day == 4 ? 'is-active' : ''"
+              @click="selectDay(4)"
+            >
+              <p>{{ daysThisWeek[3].day }}</p>
+              <p>{{ daysThisWeek[3].date }}</p>
             </div>
-            <div id="friday" class="date">
-              <p>Fri</p>
-              <p>26</p>
+            <div
+              id="friday"
+              class="date"
+              v-bind:class="selectedDay.day == 5 ? 'is-active' : ''"
+              @click="selectDay(5)"
+            >
+              <p>{{ daysThisWeek[4].day }}</p>
+              <p>{{ daysThisWeek[4].date }}</p>
             </div>
           </div>
-          <div id="arrow_right">
+          <div @click="goToNextWeek()" id="arrow_right">
             <font-awesome-icon icon="fa-solid fa-arrow-right" />
           </div>
         </div>
-        <div id="AM" class="class">
+        <div class="noClass" v-if="classesToday.length == 0">
+          <p>No classes today &#127881;</p>
+        </div>
+        <div class="class" v-for="Class in classesToday" :key="Class.subject">
           <div class="subject">
-            <span>AIN371</span>
+            <span>{{ Class.subject }}</span>
           </div>
           <div class="location_time">
-            <p>Kappa 2</p>
-            <p>AM</p>
+            <p>{{ Class.location }}</p>
+            <p>{{ Class.time }}</p>
           </div>
           <div class="students">
             <p>32 students - 12 online</p>
@@ -48,9 +76,15 @@
           <font-awesome-icon
             icon="fa-solid fa-circle-exclamation"
             class="warning"
+            v-if="Class.warning"
+          />
+          <font-awesome-icon
+            icon="fa-solid fa-circle-check"
+            class="info"
+            v-else
           />
         </div>
-        <div id="PM" class="class">
+        <!-- <div id="PM" class="class">
           <div class="subject">
             <span>UAX381</span>
           </div>
@@ -61,9 +95,8 @@
           <div class="students">
             <p>5 students - 22 online</p>
           </div>
-          <!-- TODO: Add hover tooltip -->
           <font-awesome-icon icon="fa-solid fa-circle-check" class="info" />
-        </div>
+        </div> -->
       </div>
       <div id="tests" class="rounded">
         <p id="title">Tests this Friday</p>
@@ -218,8 +251,40 @@ export default {
           },
         },
       },
-      user: null,
       calendar: null,
+      classesToday: [],
+      daysThisWeek: [
+        {
+          day: 'Mon',
+          date: null,
+          fullDate: null,
+        },
+        {
+          day: 'Tue',
+          date: null,
+          fullDate: null,
+        },
+        {
+          day: 'Wed',
+          date: null,
+          fullDate: null,
+        },
+        {
+          day: 'Thur',
+          date: null,
+          fullDate: null,
+        },
+        {
+          day: 'Fri',
+          date: null,
+          fullDate: null,
+        },
+      ],
+      currentDate: new Date(),
+      selectedDay: {
+        day: new Date().getDay(),
+        date: new Date(),
+      },
     };
   },
   async mounted() {
@@ -230,15 +295,124 @@ export default {
       this.chartConfig
     );
 
-    this.user = await this.$store.getters.getGraphClient
-      .api('/me/?$select=id,displayName,givenName,surname,department')
-      .get();
+    this.getDatesForDatepicker();
 
-    this.calendar = await this.$store.getters.getGraphClient
-      .api(
-        '/me/events?%24select=subject%2corganizer%2cstart%2cend%2clocation&%24top=30&%24skip=30'
-      )
-      .get();
+    await this.getCalendar();
+    this.getClassesOfToday();
+  },
+  methods: {
+    getDatesForDatepicker() {
+      let currentDate = this.currentDate;
+
+      // Calculate the current day of the week (0-6, where Sunday is 0)
+      let currentDayOfWeek = currentDate.getDay();
+
+      // Calculate the difference in days between the current day and Monday
+      let daysToMonday = (currentDayOfWeek + 7 - 1) % 7;
+
+      this.daysThisWeek.forEach(function (day, index) {
+        // Calculate the desired date by adding the difference in days to Monday's date
+        let desiredDate = currentDate.getDate() + (index - daysToMonday);
+
+        // Create a new date object for calculations to avoid modifying the original currentDate
+        let calculatedDate = new Date(currentDate.getTime());
+        calculatedDate.setDate(desiredDate);
+
+        // Adjust the desired date if it goes beyond the current month
+        if (calculatedDate.getMonth() !== currentDate.getMonth()) {
+          if (desiredDate > currentDate.getDate()) {
+            // Date is in the next month
+            calculatedDate.setMonth(currentDate.getMonth() + 1);
+            desiredDate -= new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth() + 1,
+              0
+            ).getDate();
+          } else {
+            // Date is in the previous month
+            calculatedDate.setMonth(currentDate.getMonth() - 1);
+            desiredDate += new Date(
+              currentDate.getFullYear(),
+              currentDate.getMonth(),
+              0
+            ).getDate();
+          }
+        }
+
+        let formattedDate = calculatedDate
+          .getDate()
+          .toString()
+          .padStart(2, '0');
+
+        day.date = formattedDate;
+        day.fullDate = calculatedDate;
+      });
+    },
+    async goToLastWeek() {
+      this.currentDate.setDate(this.currentDate.getDate() - 7);
+      this.getDatesForDatepicker();
+
+      await this.getCalendar();
+      this.selectedDay.date.setDate(this.selectedDay.date.getDate() - 7);
+      this.getClassesOfToday();
+    },
+    async goToNextWeek() {
+      this.currentDate.setDate(this.currentDate.getDate() + 7);
+      this.getDatesForDatepicker();
+
+      await this.getCalendar();
+      this.selectedDay.date.setDate(this.selectedDay.date.getDate() + 7);
+      this.getClassesOfToday();
+    },
+    selectDay(day) {
+      this.selectedDay.day = day;
+      this.selectedDay.date = this.daysThisWeek[day - 1].fullDate;
+      this.getClassesOfToday();
+    },
+    async getCalendar() {
+      let startdatetime = new Date(this.daysThisWeek[0].fullDate);
+      startdatetime.setHours(2, 1, 0);
+      let enddatetime = new Date(this.daysThisWeek[4].fullDate);
+      enddatetime.setDate(enddatetime.getDate() + 1);
+      enddatetime.setHours(1, 59, 0);
+      this.calendar = await this.$store.getters.getGraphClient
+        .api(
+          `/me/calendarview?startdatetime=${startdatetime.toISOString()}&enddatetime=${enddatetime.toISOString()}&$select=subject,start,end,location&$top=50`
+        )
+        .get();
+    },
+    getClassesOfToday() {
+      let classes = [];
+      let regex = /^[A-Z]{3}\d{3}$/;
+      this.calendar.value.forEach((event) => {
+        let start = new Date(event.start.dateTime);
+        let now = this.selectedDay.date;
+        if (start.getDay() == now.getDay()) {
+          if (event.subject.slice(0, 6).match(regex) == null) {
+            return;
+          }
+
+          let time = 'AM';
+          if (start.getHours() > 10) {
+            time = 'PM';
+          }
+          let location = '';
+          if (event.location.displayName.includes('Virtual')) {
+            location = 'Online';
+          } else {
+            location = event.location.displayName;
+          }
+          classes.push({
+            subject: event.subject.slice(0, 6),
+            location: location,
+            time: time,
+            students: '',
+            warning: false,
+          });
+        }
+      });
+      this.classesToday = classes;
+    },
   },
 };
 </script>
@@ -318,7 +492,8 @@ export default {
   height: 75px;
 }
 
-#classes .class {
+#classes .class,
+#classes .noClass {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -326,6 +501,11 @@ export default {
   height: 50px;
   margin: 10px;
   padding: 10px;
+}
+
+#classes .noClass p {
+  font-size: 20px;
+  font-weight: bold;
 }
 
 #classes .subject {
