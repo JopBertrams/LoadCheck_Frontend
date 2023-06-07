@@ -84,19 +84,6 @@
             v-else
           />
         </div>
-        <!-- <div id="PM" class="class">
-          <div class="subject">
-            <span>UAX381</span>
-          </div>
-          <div class="location_time">
-            <p>Lambda</p>
-            <p>PM</p>
-          </div>
-          <div class="students">
-            <p>5 students - 22 online</p>
-          </div>
-          <font-awesome-icon icon="fa-solid fa-circle-check" class="info" />
-        </div> -->
       </div>
       <div id="tests" class="rounded">
         <p id="title">Tests this Friday</p>
@@ -138,16 +125,25 @@
         <p id="title">Loadshedding Tshwane Campus</p>
         <div id="loadshedding_schedule">
           <div id="today">
-            <p>Today</p>
-            <p>08:00 - 10:00</p>
-            <p>12:00 - 14:00</p>
-            <p>16:00 - 20:00</p>
+            <p class="day">Today</p>
+            <div v-for="event in loadsheddingSchedule.today" :key="event.start">
+              <p>
+                {{ event.start.split('T')[1].substring(0, 5) }} -
+                {{ event.end.split('T')[1].substring(0, 5) }}
+              </p>
+            </div>
           </div>
           <div id="tomorrow">
-            <p>Tomorrow</p>
-            <p>08:00 - 10:00</p>
-            <p>12:00 - 14:00</p>
-            <p>16:00 - 20:00</p>
+            <p class="day">Tomorrow</p>
+            <div
+              v-for="event in loadsheddingSchedule.tomorrow"
+              :key="event.start"
+            >
+              <p>
+                {{ event.start.split('T')[1].substring(0, 5) }} -
+                {{ event.end.split('T')[1].substring(0, 5) }}
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -168,6 +164,7 @@
 import Sidebar from '../components/Sidebar.vue';
 import Chart from 'chart.js/auto';
 import { useDark } from '@vueuse/core';
+import axios from 'axios';
 
 const isDark = useDark({
   storageKey: 'loadcheck-color-scheme',
@@ -285,6 +282,10 @@ export default {
         day: new Date().getDay(),
         date: new Date(),
       },
+      loadsheddingSchedule: {
+        today: [],
+        tomorrow: [],
+      },
     };
   },
   async mounted() {
@@ -299,6 +300,7 @@ export default {
 
     await this.getCalendar();
     this.getClassesOfToday();
+    this.getLoadsheddingScheduleTshwaneCampus();
   },
   methods: {
     getDatesForDatepicker() {
@@ -412,6 +414,13 @@ export default {
         }
       });
       this.classesToday = classes;
+    },
+    getLoadsheddingScheduleTshwaneCampus() {
+      axios
+        .get(`${import.meta.env.VITE_BACKEND_URL}/loadshedding/tshwane_campus`)
+        .then((response) => {
+          this.loadsheddingSchedule = response.data;
+        });
     },
   },
 };
@@ -643,7 +652,8 @@ export default {
   display: flex;
   flex-direction: row;
   justify-content: space-evenly;
-  align-items: center;
+  align-items: flex-start;
+  margin-top: 20px;
   width: 100%;
   height: 100%;
 }
@@ -659,7 +669,7 @@ export default {
   color: #fff;
 }
 
-#loadshedding_campus #loadshedding_schedule div p:nth-child(1) {
+#loadshedding_campus #loadshedding_schedule p.day {
   font-weight: bold;
   margin-bottom: 10px;
 }
