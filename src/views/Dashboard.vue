@@ -58,31 +58,40 @@
             <font-awesome-icon icon="fa-solid fa-arrow-right" />
           </div>
         </div>
-        <div class="noClass" v-if="classesToday.length == 0">
-          <p>No classes today &#127881;</p>
+        <div v-if="isLoading" class="loader">
+          <LoadingSymbol />
         </div>
-        <div class="class" v-for="Class in classesToday" :key="Class.subject">
-          <div class="subject">
-            <span>{{ Class.subject }}</span>
+        <div v-else>
+          <div class="noClass" v-if="classesToday.length == 0">
+            <p>No classes today &#127881;</p>
           </div>
-          <div class="location_time">
-            <p>{{ Class.location }}</p>
-            <p>{{ Class.time }}</p>
+          <div class="class" v-for="Class in classesToday" :key="Class.subject">
+            <div class="subject">
+              <span>{{ Class.subject }}</span>
+            </div>
+            <div class="location_time">
+              <p>{{ Class.location }}</p>
+              <p>{{ Class.time }}</p>
+            </div>
+            <div class="students">
+              <p>Total students: {{ Class.amountOfStudents }}</p>
+              <p>
+                Students with loadshedding:
+                {{ Class.amountOfStudentsWithLoadshedding }}
+              </p>
+            </div>
+            <!-- TODO: Add hover tooltip -->
+            <font-awesome-icon
+              icon="fa-solid fa-circle-exclamation"
+              class="warning"
+              v-if="Class.warning"
+            />
+            <font-awesome-icon
+              icon="fa-solid fa-circle-check"
+              class="info"
+              v-else
+            />
           </div>
-          <div class="students">
-            <p>32 students - 12 online</p>
-          </div>
-          <!-- TODO: Add hover tooltip -->
-          <font-awesome-icon
-            icon="fa-solid fa-circle-exclamation"
-            class="warning"
-            v-if="Class.warning"
-          />
-          <font-awesome-icon
-            icon="fa-solid fa-circle-check"
-            class="info"
-            v-else
-          />
         </div>
       </div>
       <div id="tests" class="rounded">
@@ -162,6 +171,7 @@
 
 <script>
 import Sidebar from '../components/Sidebar.vue';
+import LoadingSymbol from '../components/LoadingSymbol.vue';
 import Chart from 'chart.js/auto';
 import { useDark } from '@vueuse/core';
 import axios from 'axios';
@@ -194,9 +204,11 @@ export default {
   name: 'Dashboard',
   components: {
     Sidebar,
+    LoadingSymbol,
   },
   data() {
     return {
+      isLoading: false,
       loadsheddingChart: null,
       chartConfig: {
         type: 'line',
@@ -414,6 +426,41 @@ export default {
         }
       });
       this.classesToday = classes;
+      this.getClassInfo();
+    },
+    getClassInfo() {
+      let date = this.selectedDay.date;
+      let classes = [];
+      this.classesToday.forEach((Class) => {
+        axios
+          .get(
+            `${import.meta.env.VITE_BACKEND_URL}/classinfo/${Class.subject}/${
+              Class.time
+            }/${date.toISOString()}`
+          )
+          .then((response) => {
+            classes.push(response.data);
+
+            classes.forEach((Class) => {
+              let index = this.classesToday.findIndex(
+                (element) =>
+                  element.subject == Class.subject && element.time == Class.time
+              );
+              this.classesToday[index].PercentageOfStudentsWithLoadshedding =
+                Class.PercentageOfStudentsWithLoadshedding;
+              this.classesToday[index].amountOfStudents =
+                Class.amountOfStudents;
+              this.classesToday[index].amountOfStudentsWithLoadshedding =
+                Class.amountOfStudentsWithLoadshedding;
+              this.classesToday[index].amountOfStudentsWithoutAddress =
+                Class.amountOfStudentsWithoutAddress;
+              this.classesToday[index].students = Class.students;
+              this.classesToday[index].time = Class.time;
+              this.classesToday[index].warning =
+                Class.PercentageOfStudentsWithLoadshedding > 0.5 ? true : false;
+            });
+          });
+      });
     },
     getLoadsheddingScheduleTshwaneCampus() {
       axios
@@ -499,6 +546,13 @@ export default {
   border-radius: 50px;
   width: 50px;
   height: 75px;
+}
+
+#classes .loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 }
 
 #classes .class,
