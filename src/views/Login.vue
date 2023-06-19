@@ -47,7 +47,7 @@ export default {
           this.$store.dispatch('setGraphClient');
 
           let user = await this.$store.getters.getGraphClient
-            .api('/me/?$select=id,department')
+            .api('/me/?$select=id,department,mailNickname')
             .get();
 
           // Choosing user department for development purposes
