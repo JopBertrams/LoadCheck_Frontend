@@ -117,37 +117,64 @@
       </div>
       <div id="tests" class="rounded">
         <p id="title">Tests this Friday</p>
-        <div id="classes">
-          <div id="AM" class="class">
-            <div class="subject">
-              <span>AIN371</span>
-            </div>
-            <div class="location_time">
-              <p>Kappa 2</p>
-              <p>AM</p>
-            </div>
-            <div class="students">
-              <p>4 students with loadshedding</p>
-            </div>
-            <!-- TODO: Add hover tooltip -->
-            <font-awesome-icon
-              icon="fa-solid fa-circle-exclamation"
-              class="warning"
-            />
+        <div v-if="isLoadingClassesFriday" class="loader">
+          <LoadingSymbol :color="'var(--BC-Blue)'" />
+        </div>
+        <div v-else>
+          <div class="noClass" v-if="classesFriday.length == 0">
+            <p>No tests this Friday &#127881;</p>
           </div>
-          <div id="PM" class="class">
+          <div
+            class="class"
+            v-for="Class in classesFriday"
+            :key="Class.subject"
+          >
             <div class="subject">
-              <span>UAX381</span>
+              <span>{{ Class.subject }}</span>
             </div>
             <div class="location_time">
-              <p>Lambda</p>
-              <p>PM</p>
+              <p>{{ Class.location }}</p>
+              <p>{{ Class.time }}</p>
             </div>
             <div class="students">
-              <p>1 student with loadshedding</p>
+              <p>Total students: {{ Class.amountOfStudents }}</p>
+              <p>
+                Students with loadshedding:
+                {{ Class.amountOfStudentsWithLoadshedding }}
+              </p>
             </div>
-            <!-- TODO: Add hover tooltip -->
-            <font-awesome-icon icon="fa-solid fa-circle-check" class="info" />
+            <VTooltip
+              :placement="'right'"
+              :triggers="isMobile ? ['click'] : ['hover']"
+              class="tooltip"
+            >
+              <font-awesome-icon
+                icon="fa-solid fa-circle-exclamation"
+                class="warning"
+                v-if="Class.warning"
+              />
+              <font-awesome-icon
+                icon="fa-solid fa-circle-check"
+                class="info"
+                v-else
+              />
+              <template #popper="{ hide }">
+                <div id="tooltip-info">
+                  <p>
+                    {{ Class.amountOfStudentsWithLoadshedding }} students with
+                    loadshedding <br />
+                    {{ Class.amountOfStudentsWithoutAddress }} students without
+                    address given <br />
+                    {{
+                      Math.round(
+                        Class.PercentageOfStudentsWithLoadshedding * 10
+                      ) / 10
+                    }}% of students has loadshedding
+                  </p>
+                  <button v-if="isMobile" @click="hide()">OK</button>
+                </div>
+              </template>
+            </VTooltip>
           </div>
         </div>
       </div>
@@ -181,9 +208,10 @@
         </div>
       </div>
       <div id="students_with_loadshedding" class="rounded">
-        <p id="title">Students with loadshedding during class</p>
-        <p id="number_of_students">12</p>
-        <p id="more_than_yesterday">10 more than yesterday</p>
+        <p id="title">Students with loadshedding during class today</p>
+        <p id="number_of_students">
+          {{ studentsWithLoadsheddingToday }}
+        </p>
       </div>
       <div id="percentage_with_loadshedding" class="rounded">
         <p id="title">Percentage of students with loadshedding this week</p>
@@ -234,6 +262,7 @@ export default {
     return {
       isMobile: false,
       isLoadingClasses: false,
+      isLoadingClassesFriday: false,
       isLoadingLoadsheddingCampus: true,
       loadsheddingChart: null,
       chartConfig: {
@@ -304,6 +333,7 @@ export default {
       },
       calendar: null,
       classesToday: [],
+      classesFriday: [],
       daysThisWeek: [
         {
           day: 'Mon',
@@ -341,6 +371,7 @@ export default {
         tomorrow: [],
       },
       loadsheddingHistory: [],
+      studentsWithLoadsheddingToday: null,
     };
   },
   async mounted() {
@@ -353,6 +384,7 @@ export default {
 
     await this.getCalendar();
     this.getClassesOfToday();
+    this.getClassesOfFriday();
     this.getLoadsheddingScheduleTshwaneCampus();
   },
   methods: {
@@ -456,7 +488,7 @@ export default {
           if (event.location.displayName.includes('Virtual')) {
             location = 'Online';
           } else {
-            location = event.location.displayName;
+            location = event.location.displayName.replace(/ *\([^)]*\) */g, '');
           }
           classes.push({
             subject: event.subject.slice(0, 6),
@@ -475,6 +507,7 @@ export default {
       let classes = [];
       if (this.classesToday.length == 0) {
         this.isLoadingClasses = false;
+        this.studentsWithLoadsheddingToday = 0;
         return;
       }
       this.classesToday.forEach((Class) => {
@@ -508,7 +541,98 @@ export default {
                   ? true
                   : false;
             });
+            if (this.studentsWithLoadsheddingToday == null) {
+              this.getAmountOfStudentsWithLoadsheddingToday();
+            }
             this.isLoadingClasses = false;
+          });
+      });
+    },
+    getClassesOfFriday() {
+      this.isLoadingClassesFriday = true;
+      let classes = [];
+      let regex = /^[A-Z]{3}\d{3}$/;
+      this.calendar.value.forEach((event) => {
+        let start = new Date(event.start.dateTime);
+        let now = this.selectedDay.date;
+        let dayOfWeek = start.getDay();
+
+        if (dayOfWeek == 5 && start.getDate() - now.getDate() <= 7) {
+          if (event.subject.slice(0, 6).match(regex) == null) {
+            return;
+          }
+
+          let time = 'AM';
+          if (start.getHours() > 10) {
+            time = 'PM';
+          }
+          let location = '';
+          if (event.location.displayName.includes('Virtual')) {
+            location = 'Online';
+          } else {
+            location = event.location.displayName.replace(/ *\([^)]*\) */g, '');
+          }
+          classes.push({
+            subject: event.subject.slice(0, 6),
+            location: location,
+            time: time,
+            students: '',
+            warning: false,
+          });
+        }
+      });
+      this.classesFriday = classes;
+      this.getClassInfoFriday();
+    },
+    getClassInfoFriday() {
+      let now = new Date();
+      let dayOfWeek = now.getDay();
+      let fridayDate;
+      if (dayOfWeek <= 4) {
+        // If today is Sunday (0) to Thursday (4), add the remaining days until Friday
+        fridayDate = now.getDate() + (5 - dayOfWeek);
+      } else {
+        // If today is Friday (5) or Saturday (6), subtract the extra days after Friday
+        fridayDate = now.getDate() + (12 - dayOfWeek);
+      }
+      let friday = new Date(now.getFullYear(), now.getMonth(), fridayDate);
+      let classes = [];
+      if (this.classesFriday.length == 0) {
+        this.isLoadingClassesFriday = false;
+        return;
+      }
+      this.classesFriday.forEach((Class) => {
+        axios
+          .get(
+            `${import.meta.env.VITE_BACKEND_URL}/classinfo/${Class.subject}/${
+              Class.time
+            }/${friday.toISOString()}`
+          )
+          .then((response) => {
+            classes.push(response.data);
+
+            classes.forEach((Class) => {
+              let index = this.classesFriday.findIndex(
+                (element) =>
+                  element.subject == Class.subject && element.time == Class.time
+              );
+              this.classesFriday[index].PercentageOfStudentsWithLoadshedding =
+                Class.PercentageOfStudentsWithLoadshedding;
+              this.classesFriday[index].amountOfStudents =
+                Class.amountOfStudents;
+              this.classesFriday[index].amountOfStudentsWithLoadshedding =
+                Class.amountOfStudentsWithLoadshedding;
+              this.classesFriday[index].amountOfStudentsWithoutAddress =
+                Class.amountOfStudentsWithoutAddress;
+              this.classesFriday[index].students = Class.students;
+              this.classesFriday[index].time = Class.time;
+              this.classesFriday[index].warning =
+                Class.PercentageOfStudentsWithLoadshedding > 50 ||
+                Class.amountOfStudentsWithoutAddress > 3
+                  ? true
+                  : false;
+            });
+            this.isLoadingClassesFriday = false;
           });
       });
     },
@@ -520,6 +644,13 @@ export default {
           this.loadsheddingSchedule = response.data;
           this.isLoadingLoadsheddingCampus = false;
         });
+    },
+    getAmountOfStudentsWithLoadsheddingToday() {
+      let amount = 0;
+      this.classesToday.forEach((Class) => {
+        amount += Class.amountOfStudentsWithLoadshedding;
+      });
+      this.studentsWithLoadsheddingToday = amount;
     },
     getLoadsheddingHistory() {
       axios
@@ -823,13 +954,7 @@ export default {
   font-size: 50px;
   font-weight: bold;
   color: #fff;
-  margin: 20px 0 0 20px;
-}
-
-#students_with_loadshedding #more_than_yesterday {
-  font-size: 16px;
-  color: #fff;
-  margin-left: 20px;
+  text-align: center;
 }
 
 #percentage_with_loadshedding {
