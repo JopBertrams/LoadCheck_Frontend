@@ -1,5 +1,5 @@
 <template>
-  <div class="spinner">
+  <div class="spinner" :style="cssProps">
     <div></div>
     <div></div>
     <div></div>
@@ -18,6 +18,19 @@
 <script>
 export default {
   name: 'LoadingSymbol',
+  props: {
+    color: {
+      type: String,
+      default: 'var(--BC-Blue)',
+    },
+  },
+  computed: {
+    cssProps() {
+      return {
+        '--spinner-color': this.color,
+      };
+    },
+  },
 };
 </script>
 
@@ -41,7 +54,7 @@ export default {
   width: 6px;
   height: 18px;
   border-radius: 20%;
-  background: var(--BC-Pink);
+  background: var(--spinner-color);
 }
 .spinner div:nth-child(1) {
   transform: rotate(0deg);

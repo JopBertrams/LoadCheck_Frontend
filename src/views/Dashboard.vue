@@ -58,8 +58,8 @@
             <font-awesome-icon icon="fa-solid fa-arrow-right" />
           </div>
         </div>
-        <div v-if="isLoading" class="loader">
-          <LoadingSymbol />
+        <div v-if="isLoadingClasses" class="loader">
+          <LoadingSymbol :color="'var(--BC-Blue)'" />
         </div>
         <div v-else>
           <div class="noClass" v-if="classesToday.length == 0">
@@ -80,17 +80,38 @@
                 {{ Class.amountOfStudentsWithLoadshedding }}
               </p>
             </div>
-            <!-- TODO: Add hover tooltip -->
-            <font-awesome-icon
-              icon="fa-solid fa-circle-exclamation"
-              class="warning"
-              v-if="Class.warning"
-            />
-            <font-awesome-icon
-              icon="fa-solid fa-circle-check"
-              class="info"
-              v-else
-            />
+            <VTooltip
+              :placement="'right'"
+              :triggers="isMobile ? ['click'] : ['hover']"
+              class="tooltip"
+            >
+              <font-awesome-icon
+                icon="fa-solid fa-circle-exclamation"
+                class="warning"
+                v-if="Class.warning"
+              />
+              <font-awesome-icon
+                icon="fa-solid fa-circle-check"
+                class="info"
+                v-else
+              />
+              <template #popper="{ hide }">
+                <div id="tooltip-info">
+                  <p>
+                    {{ Class.amountOfStudentsWithLoadshedding }} students with
+                    loadshedding <br />
+                    {{ Class.amountOfStudentsWithoutAddress }} students without
+                    address given <br />
+                    {{
+                      Math.round(
+                        Class.PercentageOfStudentsWithLoadshedding * 10
+                      ) / 10
+                    }}% of students has loadshedding
+                  </p>
+                  <button v-if="isMobile" @click="hide()">OK</button>
+                </div>
+              </template>
+            </VTooltip>
           </div>
         </div>
       </div>
@@ -132,13 +153,16 @@
       </div>
       <div id="loadshedding_campus" class="rounded">
         <p id="title">Loadshedding Tshwane Campus</p>
-        <div id="loadshedding_schedule">
+        <div v-if="isLoadingLoadsheddingCampus" class="loader">
+          <LoadingSymbol :color="'#fff'" />
+        </div>
+        <div v-else id="loadshedding_schedule">
           <div id="today">
             <p class="day">Today</p>
             <div v-for="event in loadsheddingSchedule.today" :key="event.start">
               <p>
                 {{ event.start.split('T')[1].substring(0, 5) }} -
-                {{ event.end.split('T')[1].substring(0, 5) }}
+                {{ event.finsh.split('T')[1].substring(0, 5) }}
               </p>
             </div>
           </div>
@@ -150,7 +174,7 @@
             >
               <p>
                 {{ event.start.split('T')[1].substring(0, 5) }} -
-                {{ event.end.split('T')[1].substring(0, 5) }}
+                {{ event.finsh.split('T')[1].substring(0, 5) }}
               </p>
             </div>
           </div>
@@ -182,23 +206,23 @@ const isDark = useDark({
 
 const labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-const data = {
-  labels: labels,
-  datasets: [
-    {
-      label: 'AM',
-      backgroundColor: 'rgb(173, 1, 81)',
-      borderColor: 'rgb(173, 1, 81)',
-      data: [0, 10, 5, 2, 19],
-    },
-    {
-      label: 'PM',
-      backgroundColor: 'rgb(42, 210, 201)',
-      borderColor: 'rgb(42, 210, 201)',
-      data: [0, 18, 15, 10, 5],
-    },
-  ],
-};
+// const data = {
+//   labels: labels,
+//   datasets: [
+//     {
+//       label: 'AM',
+//       backgroundColor: 'rgb(173, 1, 81)',
+//       borderColor: 'rgb(173, 1, 81)',
+//       data: [0, 10, 5, 2, 19],
+//     },
+//     {
+//       label: 'PM',
+//       backgroundColor: 'rgb(42, 210, 201)',
+//       borderColor: 'rgb(42, 210, 201)',
+//       data: [0, 18, 15, 10, 5],
+//     },
+//   ],
+// };
 
 export default {
   name: 'Dashboard',
@@ -208,11 +232,29 @@ export default {
   },
   data() {
     return {
-      isLoading: false,
+      isMobile: false,
+      isLoadingClasses: false,
+      isLoadingLoadsheddingCampus: true,
       loadsheddingChart: null,
       chartConfig: {
         type: 'line',
-        data,
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'AM',
+              backgroundColor: 'rgb(173, 1, 81)',
+              borderColor: 'rgb(173, 1, 81)',
+              data: [],
+            },
+            {
+              label: 'PM',
+              backgroundColor: 'rgb(42, 210, 201)',
+              borderColor: 'rgb(42, 210, 201)',
+              data: [],
+            },
+          ],
+        },
         options: {
           scales: {
             y: {
@@ -298,15 +340,14 @@ export default {
         today: [],
         tomorrow: [],
       },
+      loadsheddingHistory: [],
     };
   },
   async mounted() {
     Chart.defaults.font.family = 'AvantGarde';
     Chart.defaults.font.size = 16;
-    this.loadsheddingChart = new Chart(
-      document.getElementById('myChart'),
-      this.chartConfig
-    );
+
+    this.getLoadsheddingHistory();
 
     this.getDatesForDatepicker();
 
@@ -396,6 +437,7 @@ export default {
         .get();
     },
     getClassesOfToday() {
+      this.isLoadingClasses = true;
       let classes = [];
       let regex = /^[A-Z]{3}\d{3}$/;
       this.calendar.value.forEach((event) => {
@@ -431,6 +473,10 @@ export default {
     getClassInfo() {
       let date = this.selectedDay.date;
       let classes = [];
+      if (this.classesToday.length == 0) {
+        this.isLoadingClasses = false;
+        return;
+      }
       this.classesToday.forEach((Class) => {
         axios
           .get(
@@ -457,16 +503,48 @@ export default {
               this.classesToday[index].students = Class.students;
               this.classesToday[index].time = Class.time;
               this.classesToday[index].warning =
-                Class.PercentageOfStudentsWithLoadshedding > 0.5 ? true : false;
+                Class.PercentageOfStudentsWithLoadshedding > 50 ||
+                Class.amountOfStudentsWithoutAddress > 3
+                  ? true
+                  : false;
             });
+            this.isLoadingClasses = false;
           });
       });
     },
     getLoadsheddingScheduleTshwaneCampus() {
+      this.isLoadingLoadsheddingCampus = true;
       axios
         .get(`${import.meta.env.VITE_BACKEND_URL}/loadshedding/tshwane_campus`)
         .then((response) => {
           this.loadsheddingSchedule = response.data;
+          this.isLoadingLoadsheddingCampus = false;
+        });
+    },
+    getLoadsheddingHistory() {
+      axios
+        .get(`${import.meta.env.VITE_BACKEND_URL}/loadshedding/history`)
+        .then((response) => {
+          response.data.forEach((element) => {
+            const index = element.day_of_week_number;
+            if (element.loadshedding_time == 'AM') {
+              this.chartConfig.data.datasets[0].data = [
+                ...this.chartConfig.data.datasets[0].data.slice(0, index),
+                element.student_percentage,
+                ...this.chartConfig.data.datasets[0].data.slice(index),
+              ];
+            } else {
+              this.chartConfig.data.datasets[1].data = [
+                ...this.chartConfig.data.datasets[1].data.slice(0, index),
+                element.student_percentage,
+                ...this.chartConfig.data.datasets[1].data.slice(index),
+              ];
+            }
+          });
+          this.loadsheddingChart = new Chart(
+            document.getElementById('myChart'),
+            this.chartConfig
+          );
         });
     },
   },
@@ -548,7 +626,7 @@ export default {
   height: 75px;
 }
 
-#classes .loader {
+.loader {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -772,5 +850,30 @@ export default {
 .rounded {
   border-radius: 20px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.tooltip {
+  margin-left: 2rem;
+}
+
+#tooltip-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#tooltip-info p {
+  color: white;
+  text-align: center;
+}
+
+#tooltip-info button {
+  background-color: var(--BC-Blue);
+  color: white;
+  border: none;
+  padding: 0.4rem;
+  margin-top: 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
 }
 </style>
