@@ -13,18 +13,18 @@
         v-bind:class="isSidebarActive == 'dashboard' ? 'is-active' : ''"
         >Dashboard</router-link
       >
-      <router-link
+      <!-- <router-link
         to="/classes"
         class="menu-item"
         v-bind:class="isSidebarActive == 'classes' ? 'is-active' : ''"
         >All classes</router-link
-      >
-      <router-link
+      > -->
+      <!-- <router-link
         to="/students"
         class="menu-item"
         v-bind:class="isSidebarActive == 'students' ? 'is-active' : ''"
         >All students</router-link
-      >
+      > -->
       <router-link
         to="/settings"
         class="menu-item"

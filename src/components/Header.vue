@@ -19,6 +19,11 @@ export default {
 </script>
 
 <style scoped>
+header {
+  position: relative;
+  overflow: hidden;
+}
+
 header #header_image {
   width: 100%;
 }
@@ -40,5 +45,11 @@ header #user #profile_picture {
   width: 50px;
   height: 50px;
   border-radius: 50%;
+}
+
+@media (max-width: 768px) {
+  header #header_image {
+    width: 250%;
+  }
 }
 </style>

@@ -88,18 +88,18 @@ export function createRouter(app) {
         beforeEnter: authGuardLecturerPages,
         component: () => import('../views/Dashboard.vue'),
       },
-      {
-        path: '/classes',
-        name: 'classes',
-        beforeEnter: authGuardLecturerPages,
-        component: () => import('../views/Classes.vue'),
-      },
-      {
-        path: '/students',
-        name: 'students',
-        beforeEnter: authGuardLecturerPages,
-        component: () => import('../views/Students.vue'),
-      },
+      // {
+      //   path: '/classes',
+      //   name: 'classes',
+      //   beforeEnter: authGuardLecturerPages,
+      //   component: () => import('../views/Classes.vue'),
+      // },
+      // {
+      //   path: '/students',
+      //   name: 'students',
+      //   beforeEnter: authGuardLecturerPages,
+      //   component: () => import('../views/Students.vue'),
+      // },
       {
         path: '/settings',
         name: 'settings',
@@ -117,6 +117,11 @@ export function createRouter(app) {
         name: '403',
         beforeEnter: authGuard403Page,
         component: () => import('../views/403.vue'),
+      },
+      {
+        path: '/:notFound',
+        name: 'notFound',
+        component: () => import('../views/404.vue'),
       },
     ],
     history: createWebHistory(),

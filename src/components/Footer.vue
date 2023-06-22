@@ -21,13 +21,12 @@ export default {
 <style scoped>
 footer {
   position: relative;
-  text-align: center;
 }
 
 footer p {
   position: absolute;
   right: 10px;
-  bottom: 0;
+  bottom: 3px;
   font-size: 0.7rem;
   color: #fff;
 }
@@ -43,6 +42,25 @@ footer p a {
 
 footer img {
   width: 100%;
-  height: 100%;
+}
+
+@media (max-width: 768px) {
+  footer img {
+    display: none;
+  }
+
+  footer p {
+    position: relative;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    color: var(--text-color);
+  }
+
+  footer p a {
+    color: var(--text-color);
+  }
 }
 </style>

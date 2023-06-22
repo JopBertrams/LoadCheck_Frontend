@@ -27,6 +27,7 @@ import { faSlash } from '@fortawesome/free-solid-svg-icons';
 import { faBolt } from '@fortawesome/free-solid-svg-icons';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { faHouse } from '@fortawesome/free-solid-svg-icons';
+import { faFaceFrownOpen } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
   faFilter,
@@ -41,7 +42,8 @@ library.add(
   faSlash,
   faBolt,
   faCircleInfo,
-  faHouse
+  faHouse,
+  faFaceFrownOpen
 );
 
 createApp(App)

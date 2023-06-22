@@ -181,7 +181,7 @@
       <div id="loadshedding_campus" class="rounded">
         <p id="title">Loadshedding Tshwane Campus</p>
         <div v-if="isLoadingLoadsheddingCampus" class="loader">
-          <LoadingSymbol :color="'#fff'" />
+          <LoadingSymbol :color="isMobile ? 'var(--BC-Blue)' : '#fff'" />
         </div>
         <div v-else id="loadshedding_schedule">
           <div id="today">
@@ -227,30 +227,13 @@ import LoadingSymbol from '../components/LoadingSymbol.vue';
 import Chart from 'chart.js/auto';
 import { useDark } from '@vueuse/core';
 import axios from 'axios';
+import { isMobile } from 'mobile-device-detect';
 
 const isDark = useDark({
   storageKey: 'loadcheck-color-scheme',
 });
 
 const labels = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-
-// const data = {
-//   labels: labels,
-//   datasets: [
-//     {
-//       label: 'AM',
-//       backgroundColor: 'rgb(173, 1, 81)',
-//       borderColor: 'rgb(173, 1, 81)',
-//       data: [0, 10, 5, 2, 19],
-//     },
-//     {
-//       label: 'PM',
-//       backgroundColor: 'rgb(42, 210, 201)',
-//       borderColor: 'rgb(42, 210, 201)',
-//       data: [0, 18, 15, 10, 5],
-//     },
-//   ],
-// };
 
 export default {
   name: 'Dashboard',
@@ -260,7 +243,7 @@ export default {
   },
   data() {
     return {
-      isMobile: false,
+      isMobile,
       isLoadingClasses: false,
       isLoadingClassesFriday: false,
       isLoadingLoadsheddingCampus: true,
@@ -764,8 +747,8 @@ export default {
   height: 100%;
 }
 
-#classes .class,
-#classes .noClass {
+.class,
+.noClass {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -775,7 +758,7 @@ export default {
   padding: 10px;
 }
 
-#classes .noClass p {
+.noClass p {
   font-size: 20px;
   font-weight: bold;
 }
@@ -832,6 +815,7 @@ export default {
 #tests #title {
   font-size: 16px;
   font-weight: bold;
+  text-align: center;
   margin: 10px 0 0 20px;
 }
 
@@ -965,7 +949,8 @@ export default {
 #percentage_with_loadshedding #title {
   font-size: 16px;
   font-weight: bold;
-  margin: 10px 0 0 20px;
+  text-align: center;
+  margin: 10px;
 }
 
 #percentage_with_loadshedding #myChart {
@@ -1000,5 +985,55 @@ export default {
   margin-top: 0.5rem;
   border-radius: 0.5rem;
   cursor: pointer;
+}
+
+@media only screen and (max-width: 1080px) {
+  .main {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: repeat(5, 1fr);
+    grid-column-gap: 0px;
+    grid-row-gap: 10px;
+    padding: 10px;
+    margin-top: 75px;
+  }
+
+  #classes {
+    grid-area: 1 / 1 / 2 / 2;
+  }
+
+  #tests {
+    grid-area: 2 / 1 / 3 / 2;
+  }
+
+  #loadshedding_campus {
+    grid-area: 3 / 1 / 4 / 2;
+    background-color: var(--card-color);
+  }
+
+  #loadshedding_campus #title {
+    color: var(--text-color);
+  }
+
+  #loadshedding_campus #loadshedding_schedule div p {
+    color: var(--text-color);
+  }
+
+  #students_with_loadshedding {
+    grid-area: 4 / 1 / 5 / 2;
+    background-color: var(--card-color);
+  }
+
+  #students_with_loadshedding #title {
+    color: var(--text-color);
+  }
+
+  #students_with_loadshedding #number_of_students {
+    color: var(--text-color);
+  }
+
+  #percentage_with_loadshedding {
+    grid-area: 5 / 1 / 6 / 2;
+  }
 }
 </style>

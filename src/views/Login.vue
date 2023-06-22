@@ -25,12 +25,13 @@
 </template>
 
 <script>
+import { isMobile } from 'mobile-device-detect';
+
 export default {
   name: 'Login',
   data() {
     return {
-      // TODO: Add check to see if user is on mobile
-      isMobile: false,
+      isMobile,
     };
   },
   methods: {

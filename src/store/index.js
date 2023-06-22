@@ -125,6 +125,9 @@ const store = createStore({
       return state.graphClient;
     },
     getRole(state) {
+      if (state.user === undefined) {
+        return undefined;
+      }
       return state.user.department;
     },
   },
